@@ -1,36 +1,28 @@
 import java.util.*;
 
-class Main {
+class cat {
     public static final int PREPARING = 0;
     public static final int DELIVERED = 1;
     public static final int CANCEL = 2;
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
 
-        
-        String[] orderId = new String[70];
-        String[] cudIdArray = new String[70];
-        String[] names = new String[70];
-        int[] quantityOfBurger = new int[70];
-        int[] orderStatus = new int[70];
-        int orderID = 0; 
+        // Array Object
+        CustomerDetails[] details = new CustomerDetails[1];
+        int orderID = 0; // generate order_id by incrementing
         int turn = 0; // Index for storing orders
 
-        // Main menu loop
         while (true) {
-            // Home page (menu)
             System.out.println("-------------------------------------------------------------------------------");
             System.out.printf("%s%45s%33s\n", "|", "iHungry Burger", "|");
             System.out.println("-------------------------------------------------------------------------------");
-
             System.out.println();
 
             System.out.printf("%s%45s\n", "[1] Place Order ", "[2] Search Best Customer");
             System.out.printf("%s%39s\n", "[3] Search Order ", "[4] Search Customer");
             System.out.printf("%s%45s\n", "[5] View Orders ", "[6] Update Order Details");
             System.out.println("[7] Exit");
-
             System.out.println('\n');
 
             System.out.print("Enter an option to continue > ");
@@ -41,39 +33,39 @@ class Main {
             switch (option) {
                 case 1:
                     clearConsole();
-                    boolean case1 = true;
-                    while (case1) {
+                    boolean placeAnother = true;
+                    while (placeAnother) {
                         System.out.println("-------------------------------------------------------------------------------");
                         System.out.printf("%s%43s%35s\n", "|", "PLACE ORDER", "|");
                         System.out.println("-------------------------------------------------------------------------------");
 
-                        
                         orderID++;
                         int count = 0;
                         int copyOfNum = orderID;
+
                         while (copyOfNum > 0) {
                             count++;
                             copyOfNum /= 10;
                         }
+
                         String stringNum = Integer.toString(orderID);
                         for (int x = 0; x < (4 - count); x++) {
                             stringNum = "0" + stringNum;
                         }
+
                         String fullOrderId = "B" + stringNum;
                         System.out.println("\nORDER ID - " + fullOrderId);
                         System.out.println("================");
                         System.out.println();
 
-                        // Customer ID input with format validation
                         String cusId = custIdValidation();
 
-                        // Check if Customer ID exists in cudIdArray
                         boolean isItExist = false;
                         String cusName = null;
-                        for (int i = 0; i < turn; i++) {
-                            if (cudIdArray[i] != null && cudIdArray[i].equalsIgnoreCase(cusId)) {
+                        for (int y = 0; y < turn; y++) {
+                            if (details[y] != null && cusId.equalsIgnoreCase(details[y].getCudId())) {
                                 isItExist = true;
-                                cusName = names[i]; // Get the name from the first matching order
+                                cusName = details[y].getNames();
                                 System.out.println("Customer Name: " + cusName);
                                 break;
                             }
@@ -84,44 +76,44 @@ class Main {
                             cusName = input.nextLine();
                         }
 
-                        // Proceed with quantity input
                         int quantity;
-                        boolean check;
                         do {
                             System.out.print("Enter Burger Quantity - ");
                             quantity = input.nextInt();
-                            input.nextLine(); 
-                            check = quantity <= 0;
-                            if (check) {
+                            input.nextLine();
+                            if (quantity <= 0) {
                                 System.out.println("Invalid quantity.\n");
                             }
-                        } while (check);
+                        } while (quantity <= 0);
 
                         double total = quantity * 500.0;
                         System.out.printf("Total value - %.2f\n", total);
 
                         System.out.print("\tAre you confirm order (Y/N) - ");
-                        char confamation = input.nextLine().charAt(0);
+                        char confamation = input.nextLine().trim().charAt(0);
                         boolean isitok = confamation == 'y' || confamation == 'Y';
 
                         if (isitok) {
-                            // Store order details
-                            orderId[turn] = fullOrderId;
-                            cudIdArray[turn] = cusId;
-                            names[turn] = cusName; // Store the name (existing or newly entered)
-                            quantityOfBurger[turn] = quantity;
-                            orderStatus[turn] = PREPARING;
+                            details[turn] = new CustomerDetails(fullOrderId, cusId, cusName, quantity, PREPARING);
                             System.out.println("\tYour order is entered into the system successfully...");
-                            turn++; 
+                            turn++;
+
+                            if (turn >= details.length) {
+                                CustomerDetails[] tempArray = new CustomerDetails[details.length + 1];
+                                for (int x = 0; x < details.length; x++) {
+                                    tempArray[x] = details[x];
+                                }
+                                details = tempArray;
+                            }
                         } else {
-                            case1 = false;
+                            placeAnother = false;
                         }
 
                         if (isitok) {
                             System.out.print("\nDo you want to place another order (Y/N): ");
-                            char confamation2 = input.nextLine().charAt(0);
+                            char confamation2 = input.nextLine().trim().charAt(0);
                             if (confamation2 == 'N' || confamation2 == 'n') {
-                                case1 = false;
+                                placeAnother = false;
                             }
                         }
                         clearConsole();
@@ -131,8 +123,7 @@ class Main {
                 case 2:
                     clearConsole();
                     boolean ok = true;
-
-                    L1: while (ok) {
+                    while (ok) {
                         System.out.println("-------------------------------------------------------------------------------");
                         System.out.printf("%s%43s%35s\n", "|", "BEST CUSTOMER", "|");
                         System.out.println("-------------------------------------------------------------------------------");
@@ -141,92 +132,71 @@ class Main {
                         if (turn == 0) {
                             System.out.println("No customers found!");
                         } else {
-                            // Step 1: Find unique customer IDs
-                            String[] uniqueCudIds = new String[1];
+                            FindBestCustomer[] uniqueDetails = new FindBestCustomer[1];
                             int uniqueCount = 0;
 
                             for (int i = 0; i < turn; i++) {
-                                String currentCudId = cudIdArray[i];
+                                String currentCudId = details[i].getCudId();
                                 boolean isDuplicate = false;
 
                                 for (int j = 0; j < uniqueCount; j++) {
-                                    if (uniqueCudIds[j].equalsIgnoreCase(currentCudId)) {
+                                    if (uniqueDetails[j].getCudId().equalsIgnoreCase(currentCudId)) {
                                         isDuplicate = true;
                                         break;
                                     }
                                 }
 
                                 if (!isDuplicate) {
-                                    if (uniqueCount == uniqueCudIds.length) {
-                                        // Resize the array
-                                        String[] uniqueCudIdsCopy = new String[uniqueCudIds.length + 1];
-                                        for (int v = 0; v < uniqueCudIds.length; v++) {
-                                            uniqueCudIdsCopy[v] = uniqueCudIds[v];
+                                    if (uniqueCount == uniqueDetails.length) {
+                                        FindBestCustomer[] tempUniqueDetails = new FindBestCustomer[uniqueDetails.length + 1];
+                                        for (int v = 0; v < uniqueDetails.length; v++) {
+                                            tempUniqueDetails[v] = uniqueDetails[v];
                                         }
-                                        uniqueCudIds = uniqueCudIdsCopy;
+                                        uniqueDetails = tempUniqueDetails;
                                     }
-                                    uniqueCudIds[uniqueCount] = currentCudId;
+                                    uniqueDetails[uniqueCount] = new FindBestCustomer(currentCudId);
                                     uniqueCount++;
                                 }
                             }
 
-                            // Step 2: Create arrays for unique customers and calculate totals
-                            String[] finalUniqueCudIds = new String[uniqueCount];
-                            String[] finalUniqueNames = new String[uniqueCount];
-                            double[] finalUniqueTotals = new double[uniqueCount];
-
                             for (int f = 0; f < uniqueCount; f++) {
-                                String cudId = uniqueCudIds[f];
-                                finalUniqueCudIds[f] = cudId;
-
-                                // Find the name (take the first occurrence since it’s consistent)
+                                String cudId = uniqueDetails[f].getCudId();
                                 String customerName = "";
                                 for (int x = 0; x < turn; x++) {
-                                    if (cudIdArray[x].equalsIgnoreCase(cudId)) {
-                                        customerName = names[x];
+                                    if (details[x].getCudId().equalsIgnoreCase(cudId)) {
+                                        customerName = details[x].getNames();
                                         break;
                                     }
                                 }
-                                finalUniqueNames[f] = customerName;
+                                uniqueDetails[f].setName(customerName);
 
-                                // Calculate total for this customer
                                 double tot = 0.0;
                                 for (int x = 0; x < turn; x++) {
-                                    if (cudIdArray[x].equalsIgnoreCase(cudId)) {
-                                        tot += quantityOfBurger[x] * 500.0;
+                                    if (details[x].getCudId().equalsIgnoreCase(cudId)) {
+                                        tot += details[x].getQuantityOfBurger() * 500.0;
                                     }
                                 }
-                                finalUniqueTotals[f] = tot;
+                                uniqueDetails[f].setTotal(tot);
                             }
 
-                            // Step 3: Sort by total in descending order (bubble sort)
                             for (int i = 0; i < uniqueCount - 1; i++) {
                                 for (int j = 0; j < uniqueCount - i - 1; j++) {
-                                    if (finalUniqueTotals[j] < finalUniqueTotals[j + 1]) {
-                                        // Swap totals
-                                        double tempTotal = finalUniqueTotals[j];
-                                        finalUniqueTotals[j] = finalUniqueTotals[j + 1];
-                                        finalUniqueTotals[j + 1] = tempTotal;
-
-                                        // Swap customer IDs
-                                        String tempId = finalUniqueCudIds[j];
-                                        finalUniqueCudIds[j] = finalUniqueCudIds[j + 1];
-                                        finalUniqueCudIds[j + 1] = tempId;
-
-                                        // Swap names
-                                        String tempName = finalUniqueNames[j];
-                                        finalUniqueNames[j] = finalUniqueNames[j + 1];
-                                        finalUniqueNames[j + 1] = tempName;
+                                    if (uniqueDetails[j].getTotal() < uniqueDetails[j + 1].getTotal()) {
+                                        FindBestCustomer temp = uniqueDetails[j];
+                                        uniqueDetails[j] = uniqueDetails[j + 1];
+                                        uniqueDetails[j + 1] = temp;
                                     }
                                 }
                             }
 
-                            // Step 4: Display the sorted list
                             System.out.println("--------------------------------------------------");
                             System.out.printf("%-15s%-20s%-10s\n", "CustomerID", "Name", "Total");
                             System.out.println("--------------------------------------------------");
                             for (int i = 0; i < uniqueCount; i++) {
-                                System.out.printf("%-15s%-20s%.2f\n", finalUniqueCudIds[i], finalUniqueNames[i], finalUniqueTotals[i]);
+                                System.out.printf("%-15s%-20s%.2f\n",
+                                        uniqueDetails[i].getCudId(),
+                                        uniqueDetails[i].getName(),
+                                        uniqueDetails[i].getTotal());
                                 System.out.println("--------------------------------------------------");
                             }
                         }
@@ -238,7 +208,6 @@ class Main {
                             ok = false;
                         } else {
                             clearConsole();
-                            continue L1;
                         }
                     }
                     break;
@@ -253,14 +222,13 @@ class Main {
                         System.out.println();
 
                         System.out.print("Enter Order ID: ");
-                        String searchId = input.nextLine().trim().toUpperCase(); // Convert input to uppercase
+                        String searchId = input.nextLine().trim().toUpperCase();
 
                         boolean found = false;
                         int foundIndex = -1;
 
-                        // Search through existing orders
                         for (int i = 0; i < turn; i++) {
-                            if (searchId.equals(orderId[i])) {
+                            if (searchId.equalsIgnoreCase(details[i].getOrderId())) {
                                 found = true;
                                 foundIndex = i;
                                 break;
@@ -268,15 +236,14 @@ class Main {
                         }
 
                         if (found) {
-                            
                             System.out.println("----------------------------------------------------------------------------------");
                             System.out.printf("%-15s%-15s%-20s%-10s%-12s%-15s\n", "OrderID", "CustomerID", "Name", "Quantity", "Value", "Status");
                             System.out.println("----------------------------------------------------------------------------------");
 
-                            double totalValue = quantityOfBurger[foundIndex] * 500.0;
+                            double totalValue = details[foundIndex].getQuantityOfBurger() * 500.0;
                             String status = "";
 
-                            switch (orderStatus[foundIndex]) {
+                            switch (details[foundIndex].getOrderStatus()) {
                                 case 1:
                                     status = "DELIVERED";
                                     break;
@@ -288,7 +255,13 @@ class Main {
                                     break;
                             }
 
-                            System.out.printf("%-15s%-15s%-20s%-10d%-12.2f%-15s\n", orderId[foundIndex], cudIdArray[foundIndex], names[foundIndex], quantityOfBurger[foundIndex], totalValue, status);
+                            System.out.printf("%-15s%-15s%-20s%-10d%-12.2f%-15s\n",
+                                    details[foundIndex].getOrderId(),
+                                    details[foundIndex].getCudId(),
+                                    details[foundIndex].getNames(),
+                                    details[foundIndex].getQuantityOfBurger(),
+                                    totalValue,
+                                    status);
                             System.out.println("----------------------------------------------------------------------------------");
                         } else {
                             System.out.println("\nInvalid Order ID!");
@@ -307,7 +280,6 @@ class Main {
                     clearConsole();
                     boolean searchCustomer = true;
                     while (searchCustomer) {
-                        boolean found = false;
                         System.out.println("-------------------------------------------------------------------------------");
                         System.out.printf("%s%43s%35s\n", "|", "SEARCH CUSTOMER", "|");
                         System.out.println("-------------------------------------------------------------------------------");
@@ -315,14 +287,16 @@ class Main {
 
                         String searchCusId = custIdValidation();
                         String customerName = "";
+                        boolean found = false;
 
-                        for (int c = 0; c < cudIdArray.length; c++) {
-                            if (searchCusId.equalsIgnoreCase(cudIdArray[c])) {
+                        for (int c = 0; c < turn; c++) {
+                            if (searchCusId.equalsIgnoreCase(details[c].getCudId())) {
                                 found = true;
-                                customerName = names[c];
+                                customerName = details[c].getNames();
                                 break;
                             }
                         }
+
                         if (found) {
                             System.out.println("\nCustomerID - " + searchCusId);
                             System.out.println("Name        - " + customerName);
@@ -332,10 +306,13 @@ class Main {
                             System.out.printf("%-10s%-22s%-15s\n", "Order_ID", "Order_Quantity", "Total Value");
                             System.out.println("----------------------------------------------------");
 
-                            for (int i = 0; i < cudIdArray.length; i++) {
-                                if (searchCusId.equalsIgnoreCase(cudIdArray[i])) {
-                                    double totalValue = quantityOfBurger[i] * 500.00;
-                                    System.out.printf("%-15s%-17d%-15.2f\n", orderId[i], quantityOfBurger[i], totalValue);
+                            for (int i = 0; i < turn; i++) {
+                                if (searchCusId.equalsIgnoreCase(details[i].getCudId())) {
+                                    double totalValue = details[i].getQuantityOfBurger() * 500.00;
+                                    System.out.printf("%-15s%-17d%-15.2f\n",
+                                            details[i].getOrderId(),
+                                            details[i].getQuantityOfBurger(),
+                                            totalValue);
                                     System.out.println("----------------------------------------------------");
                                 }
                             }
@@ -368,106 +345,61 @@ class Main {
                         System.out.println("[3] Cancel Order");
                         System.out.print("\nEnter an option to continue > ");
                         int subOption = input.nextInt();
-                        input.nextLine(); 
+                        input.nextLine();
 
                         clearConsole();
 
+                        int targetStatus = -1;
+                        String statusTitle = "";
                         switch (subOption) {
                             case 1:
-                                System.out.println("-------------------------------------------------------------------------------");
-                                System.out.printf("%s%43s%35s\n", "|", "DELIVERED ORDER", "|");
-                                System.out.println("-------------------------------------------------------------------------------");
-                                System.out.println("\n");
-
-                                for (int x = 0; x < orderStatus.length; x++) {
-                                    if (orderStatus[x] == DELIVERED) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-
-                                if (found) {
-                                    System.out.println("-----------------------------------------------------------------------");
-                                    System.out.printf("%-10s%-12s%-10s%-12s%-12s\n", "OrderID", "CustomerID", "Name", "Quantity", "OrderValue");
-                                    System.out.println("-----------------------------------------------------------------------");
-
-                                    for (int i = 0; i < turn; i++) {
-                                        if (orderStatus[i] == DELIVERED) {
-                                            double totalValue = quantityOfBurger[i] * 500.0;
-                                            System.out.printf("%-10s%-12s%-12s%-12d%-12.2f\n",
-                                                    orderId[i], cudIdArray[i], names[i], quantityOfBurger[i], totalValue);
-                                        }
-                                    }
-                                    System.out.println("-----------------------------------------------------------------------");
-                                } else {
-                                    System.out.println("No delivered orders found!");
-                                }
+                                targetStatus = DELIVERED;
+                                statusTitle = "DELIVERED ORDER";
                                 break;
-
                             case 2:
-                                System.out.println("-------------------------------------------------------------------------------");
-                                System.out.printf("%s%43s%35s\n", "|", "PREPAING ORDER", "|");
-                                System.out.println("-------------------------------------------------------------------------------");
-                                System.out.println("\n");
-
-                                for (int x = 0; x < orderStatus.length; x++) {
-                                    if (orderStatus[x] == PREPARING) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-
-                                if (found) {
-                                    System.out.println("-----------------------------------------------------------------------");
-                                    System.out.printf("%-10s%-12s%-10s%-12s%-12s\n", "OrderID", "CustomerID", "Name", "Quantity", "OrderValue");
-                                    System.out.println("-----------------------------------------------------------------------");
-
-                                    for (int i = 0; i < turn; i++) {
-                                        if (orderStatus[i] == PREPARING) {
-                                            double totalValue = quantityOfBurger[i] * 500.0;
-                                            System.out.printf("%-10s%-12s%-12s%-12d%-12.2f\n",
-                                                    orderId[i], cudIdArray[i], names[i], quantityOfBurger[i], totalValue);
-                                        }
-                                    }
-                                    System.out.println("-----------------------------------------------------------------------");
-                                } else {
-                                    System.out.println("Preparing Orders feature not yet implemented.");
-                                }
+                                targetStatus = PREPARING;
+                                statusTitle = "PREPARING ORDER";
                                 break;
-
                             case 3:
-                                System.out.println("-------------------------------------------------------------------------------");
-                                System.out.printf("%s%43s%35s\n", "|", "CANCEL ORDER", "|");
-                                System.out.println("-------------------------------------------------------------------------------");
-                                System.out.println("\n");
-
-                                for (int x = 0; x < orderStatus.length; x++) {
-                                    if (orderStatus[x] == CANCEL) {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-
-                                if (found) {
-                                    System.out.println("-----------------------------------------------------------------------");
-                                    System.out.printf("%-10s%-12s%-10s%-12s%-12s\n", "OrderID", "CustomerID", "Name", "Quantity", "OrderValue");
-                                    System.out.println("-----------------------------------------------------------------------");
-
-                                    for (int i = 0; i < turn; i++) {
-                                        if (orderStatus[i] == CANCEL) {
-                                            double totalValue = quantityOfBurger[i] * 500.0;
-                                            System.out.printf("%-10s%-12s%-12s%-12d%-12.2f\n",
-                                                    orderId[i], cudIdArray[i], names[i], quantityOfBurger[i], totalValue);
-                                        }
-                                    }
-                                    System.out.println("-----------------------------------------------------------------------");
-                                } else {
-                                    System.out.println("Canceled Orders feature not yet implemented.");
-                                }
+                                targetStatus = CANCEL;
+                                statusTitle = "CANCEL ORDER";
                                 break;
-
                             default:
                                 System.out.println("Invalid sub-option!");
+                                continue;
+                        }
+
+                        System.out.println("-------------------------------------------------------------------------------");
+                        System.out.printf("%s%43s%35s\n", "|", statusTitle, "|");
+                        System.out.println("-------------------------------------------------------------------------------");
+                        System.out.println("\n");
+
+                        for (int x = 0; x < turn; x++) {
+                            if (details[x].getOrderStatus() == targetStatus) {
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (found) {
+                            System.out.println("-----------------------------------------------------------------------");
+                            System.out.printf("%-10s%-12s%-10s%-12s%-12s\n", "OrderID", "CustomerID", "Name", "Quantity", "OrderValue");
+                            System.out.println("-----------------------------------------------------------------------");
+
+                            for (int i = 0; i < turn; i++) {
+                                if (details[i].getOrderStatus() == targetStatus) {
+                                    double totalValue = details[i].getQuantityOfBurger() * 500.0;
+                                    System.out.printf("%-10s%-12s%-12s%-12d%-12.2f\n",
+                                            details[i].getOrderId(),
+                                            details[i].getCudId(),
+                                            details[i].getNames(),
+                                            details[i].getQuantityOfBurger(),
+                                            totalValue);
+                                }
+                            }
+                            System.out.println("-----------------------------------------------------------------------");
+                        } else {
+                            System.out.println("No " + statusTitle.toLowerCase() + " orders found!");
                         }
 
                         System.out.print("\nDo you want to go to home page? (Y/N): ");
@@ -495,7 +427,7 @@ class Main {
                         boolean found = false;
                         int foundIndex = -1;
                         for (int i = 0; i < turn; i++) {
-                            if (searchId.equalsIgnoreCase(orderId[i])) {
+                            if (searchId.equalsIgnoreCase(details[i].getOrderId())) {
                                 found = true;
                                 foundIndex = i;
                                 break;
@@ -503,14 +435,13 @@ class Main {
                         }
 
                         if (found) {
-                            if (orderStatus[foundIndex] == PREPARING) {
-                                
-                                System.out.printf("%-13s%-3s%s\n", "Order ID", "-", orderId[foundIndex]);
-                                System.out.printf("%-13s%-3s%s\n", "Customer ID", "-", cudIdArray[foundIndex]);
-                                System.out.printf("%-13s%-3s%s\n", "Name", "-", names[foundIndex]);
-                                System.out.printf("%-13s%-3s%d\n", "Quantity", "-", quantityOfBurger[foundIndex]);
+                            if (details[foundIndex].getOrderStatus() == PREPARING) {
+                                System.out.printf("%-13s%-3s%s\n", "Order ID", "-", details[foundIndex].getOrderId());
+                                System.out.printf("%-13s%-3s%s\n", "Customer ID", "-", details[foundIndex].getCudId());
+                                System.out.printf("%-13s%-3s%s\n", "Name", "-", details[foundIndex].getNames());
+                                System.out.printf("%-13s%-3s%d\n", "Quantity", "-", details[foundIndex].getQuantityOfBurger());
 
-                                double totalValue = quantityOfBurger[foundIndex] * 500.0;
+                                double totalValue = details[foundIndex].getQuantityOfBurger() * 500.0;
                                 System.out.printf("%-13s%-3s%.2f\n", "Order Value", "-", totalValue);
                                 System.out.printf("%-13s%-3s%s\n", "Order Status", "-", "PREPARING");
 
@@ -521,25 +452,25 @@ class Main {
 
                                 System.out.print("Enter your option - ");
                                 int subOption = input.nextInt();
-                                input.nextLine(); 
+                                input.nextLine();
 
                                 switch (subOption) {
                                     case 1:
                                         System.out.println("\nQuantity Update");
                                         System.out.println("===============\n");
-                                        System.out.printf("%-13s%-3s%s\n", "Order ID", "-", orderId[foundIndex]);
-                                        System.out.printf("%-13s%-3s%s\n", "Customer ID", "-", cudIdArray[foundIndex]);
-                                        System.out.printf("%-13s%-3s%s\n", "Name", "-", names[foundIndex]);
+                                        System.out.printf("%-13s%-3s%s\n", "Order ID", "-", details[foundIndex].getOrderId());
+                                        System.out.printf("%-13s%-3s%s\n", "Customer ID", "-", details[foundIndex].getCudId());
+                                        System.out.printf("%-13s%-3s%s\n", "Name", "-", details[foundIndex].getNames());
                                         System.out.println();
 
                                         System.out.print("Enter your quantity update value - ");
                                         int newQuantity = input.nextInt();
-                                        input.nextLine(); 
+                                        input.nextLine();
                                         if (newQuantity > 0) {
-                                            quantityOfBurger[foundIndex] = newQuantity;
+                                            details[foundIndex].setQuantityOfBurger(newQuantity);
                                             System.out.println("\tUpdate order quantity successfully...\n");
-                                            System.out.println("New order quantity - " + quantityOfBurger[foundIndex]);
-                                            totalValue = quantityOfBurger[foundIndex] * 500.0;
+                                            System.out.println("New order quantity - " + details[foundIndex].getQuantityOfBurger());
+                                            totalValue = details[foundIndex].getQuantityOfBurger() * 500.0;
                                             System.out.printf("%s%.2f\n\n", "New order value - ", totalValue);
                                         } else {
                                             System.out.println("Invalid quantity. Please enter a positive integer.\n");
@@ -549,18 +480,18 @@ class Main {
                                     case 2:
                                         System.out.println("\nStatus Update");
                                         System.out.println("=============\n");
-                                        System.out.printf("%-13s%-3s%s\n", "Order ID", "-", orderId[foundIndex]);
-                                        System.out.printf("%-13s%-3s%s\n", "Customer ID", "-", cudIdArray[foundIndex]);
-                                        System.out.printf("%-13s%-3s%s\n", "Name", "-", names[foundIndex]);
+                                        System.out.printf("%-13s%-3s%s\n", "Order ID", "-", details[foundIndex].getOrderId());
+                                        System.out.printf("%-13s%-3s%s\n", "Customer ID", "-", details[foundIndex].getCudId());
+                                        System.out.printf("%-13s%-3s%s\n", "Name", "-", details[foundIndex].getNames());
                                         System.out.println("\t(0) Preparing");
                                         System.out.println("\t(1) Delivered");
                                         System.out.println("\t(2) Cancel");
 
                                         System.out.print("Enter new order status - ");
                                         int status = input.nextInt();
-                                        input.nextLine(); // Consume newline
+                                        input.nextLine();
                                         if (status == 0 || status == 1 || status == 2) {
-                                            orderStatus[foundIndex] = status;
+                                            details[foundIndex].setOrderStatus(status);
                                             System.out.println("\nUpdate order status successfully...\n");
                                             String statusStr = (status == 0) ? "PREPARING" : (status == 1) ? "DELIVERED" : "CANCEL";
                                             System.out.println("New order status - " + statusStr);
@@ -573,7 +504,7 @@ class Main {
                                         System.out.println("Invalid option! Please choose 1 or 2.\n");
                                         break;
                                 }
-                            } else if (orderStatus[foundIndex] == DELIVERED) {
+                            } else if (details[foundIndex].getOrderStatus() == DELIVERED) {
                                 System.out.println("This Order is already delivered...You can not update this order...");
                             } else {
                                 System.out.println("This Order is already cancelled...You can not update this order...");
@@ -605,6 +536,7 @@ class Main {
     }
 
     // Console clear method
+
     public static void clearConsole() {
         try {
             new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
@@ -614,7 +546,6 @@ class Main {
             }
         }
     }
-
     // Customer ID (Phone Number) Validation method
     public static String custIdValidation() {
         Scanner input = new Scanner(System.in);
@@ -628,7 +559,86 @@ class Main {
                 System.out.println("Invalid Customer ID. Please enter a 10-digit number starting with '0'.\n");
             }
         } while (!validation);
-
         return phoneNumber;
+    }
+}
+
+/// main method is over from here
+
+
+class CustomerDetails {
+    private String orderId;
+    private String cudId;
+    private String names;
+    private int quantityOfBurger;
+    private int orderStatus;
+
+    CustomerDetails(String pOrderId, String pCudId, String pNames, int pQuantityOfBurger, int pOrderStatus) {
+        this.orderId = pOrderId;
+        this.cudId = pCudId;
+        this.names = pNames;
+        this.quantityOfBurger = pQuantityOfBurger;
+        this.orderStatus = pOrderStatus;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public String getCudId() {
+        return cudId;
+    }
+
+    public String getNames() {
+        return names;
+    }
+
+    public int getQuantityOfBurger() {
+        return quantityOfBurger;
+    }
+
+    public int getOrderStatus() {
+        return orderStatus;
+    }
+
+    // for case 6
+    public void setQuantityOfBurger(int quantity) {
+        this.quantityOfBurger = quantity;
+    }
+
+    public void setOrderStatus(int status) {
+        this.orderStatus = status;
+    }
+}
+
+class FindBestCustomer {
+    private String cudId;
+    private String name;
+    private double total;
+
+    public FindBestCustomer(String pCudId) {
+        this.cudId = pCudId;
+        this.name = "";
+        this.total = 0.0;
+    }
+
+    public String getCudId() {
+        return cudId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getTotal() {
+        return total;
+    }
+
+    public void setName(String pName) {
+        this.name = pName;
+    }
+
+    public void setTotal(double pTotal) {
+        this.total = pTotal;
     }
 }
